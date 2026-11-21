@@ -1,5 +1,0 @@
-﻿.env
-**/.env
-myenv/
-**/__pycache__/
-*.pyc
