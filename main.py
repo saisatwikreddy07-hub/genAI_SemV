@@ -1,45 +1,38 @@
-
 import os
-from pathlib import Path
 from dotenv import load_dotenv
 
-from llm_client import (
-    GeminiProvider,
-    OllamaProvider,
-    LLMClient
-)
+from llm_client import GeminiProvider, OllamaProvider, LLMClient
+from usage_logger import UsageLogger
 
-# Load Gemini API key
-load_dotenv(Path(__file__).with_name(".env"))
 
-print("\n===== WEEK 2 LLM CLIENT =====")
-print("1. Gemini AI (Online)")
-print("2. Qwen2.5-Coder 14B (Local)")
+load_dotenv(override=True)
 
-choice = input("\nChoose provider (1/2): ").strip()
+usage_logger = UsageLogger()
 
-if choice == "1":
-    api_key = os.getenv("GEMINI_API_KEY")
+try:
+    provider_name = input(
+        "Choose provider (gemini/ollama): "
+    ).strip().lower()
 
-    if not api_key:
-        raise ValueError("Gemini API key not found!")
+    if provider_name == "gemini":
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            raise ValueError("Gemini API key not found in .env")
+        provider = GeminiProvider(api_key)
 
-    provider = GeminiProvider(api_key)
-    print("\nUsing Gemini AI")
+    elif provider_name == "ollama":
+        provider = OllamaProvider("gpt-oss:20b")
 
-elif choice == "2":
-    provider = OllamaProvider("qwen2.5-coder:14b")
-    print("\nUsing Qwen2.5-Coder 14B")
+    else:
+        raise ValueError("Invalid provider selected")
 
-else:
-    raise ValueError("Invalid provider selected!")
+    client = LLMClient(provider, usage_logger)
 
-# Common LLM interface
-client = LLMClient(provider)
+    prompt = input("Enter your question: ")
+    answer = client.generate(prompt)
 
-prompt = input("\nEnter your question: ")
+    print("\nLLM Response:")
+    print(answer)
 
-answer = client.generate(prompt)
-
-print("\n===== AI RESPONSE =====")
-print(answer)
+finally:
+    usage_logger.close()
